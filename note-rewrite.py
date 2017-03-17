@@ -15,24 +15,9 @@ outputWriter = csv.writer(outputFile)
 # also note that for the regexes that denote parts of speech (such as 
 # QADJ, QVB, and QNOUN) a complete list may not have been provided,
 # and others may need to be added.
-notation = [r"(^\+ | \+$)", r"(^- | -$)", r"( \+ BUT\b)", r"( - BUT\b)", 
-r"(^\$ | \$$)", r"(^\+\$ | \+\$$)", r"(^-\$ | -\$)", r"(DRWG)", r"(QB\b)", 
-r"(QT\b)", r"(QBF)", r"(QTF)", r"(QFR)", r"(^= | =$)", r"(Q a Q)", r"(QP\b)", 
-r"(QM/Y)", r"(QF/Y)", r"(^\* | \*$)", r"(QU\b)", r"(Q-U)", r"(QUU)", r"(QR\b)", 
-r"(QRR)", r"(QH\b)", r"(QS\b)", r"(QW\b)", r"(Q-W)", r"(QAP)", r"(Q-AP)", r"(QN\b)", 
-r"(QNN)", r"(QOF)", r"(QOOF)", r"(QK\b)", r"(Q-K)", r"(QLIT)", r"(QV\b)", r"(QEM)", 
-r"(QVL)", r"(QDG)", r"(QAMER)", r"(QHUM)", r"(QELSW)", r"(QRTR)", r"(QSMT)", r"(QOTW)", 
-r"(QNEX)", r"(QET\b)", r"(QPOL)", r"(QRUS)", r"(QRUM)", r"(QHUNG)", r"(QGERM)", r"(QSYN)", 
-r"(QGL\b)", r"(QGLY)", r"(QYID)", r"(QGLE)", r"(QENG)", r"(QI GL)", r"(QANG)", r"(QI\b)", 
-r"(^\) | \)$)", r"(^\)\+ | \)\+$)", r"(^\)- | \)-$)", r"(^\)= | \)=$)", 
-r"(EQ)", r"(\|\|)", r"(QCF)", r"(QZZ)", r"(QZT)", r"(\.\.\.{1})", r"(QETC)", r"(QVB)", 
-r"(QADJ)", r"(QINF)", r"(QNOUN)", r"(/[^/]+/)", r"(\b/)", r"(\bCM\b)", r"(\bCLN\b)", 
-r"(\bSC\b)", r"(\bXX\b)", r"(QQ\b)", r"(^0\b)", r"(^O\b)", r"(QNT)", r"(Q-T)", r"(QLAT)", 
-r"(QTA)", r"(QNP)", r"(QMEMX)", r"(\u2721)"]
+notation = r"(?:(?:(?:\$|\)[+=-]?|\*|^\+\$?|-\$?|[O0]\b|=))|(?:(?:\$|\)[+=-]?|\*|\+\$?|-|=)$)|Q[BHKNPRSTUVW]\b|(?:(?:[+-]BUT|Q(?:E[DT]|GL|[IQ]))\b)|(?:\b(?:C(?:LN|M)|SC|XX)\b)|\|{2}|\.{3}|/[^/]+/|\(/\d*|\(\d*|\(\$\d*|\(\(|-\$|\u2721|(?:DRWG|EQ|MIS(?:PMP|TD)|OVRPMP|Q(?:-(?:AP|[KTUW])|A(?:DJ|MER|NG|P)|BF|CF|DG|E(?:D[NS]|LSW|M|NG|TC)|F(?:/Y|R)|G(?:ERM|L[EY])|HU(?:M|NG)|I(?:GL|NF)|L(?:AT|IT)|M(?:/Y|EMX)|N(?:EX|OUN|[NPT])|O(?:F|OF|TW)|POL|R(?:R|TR|U(?:M|SS))|S(?:MT|YN)|T[AF]|UU|V[BL]|YID|Z[TZ]|aQ)))"
 
-# re.split() in the loop below will separate each regex from the other
-# text on that line and place those two pieces into a list.
-# notesSeparate is a list of those lists.
+# list of lists, two items each, that will become columns according to the .csv file
 notesSeparate = []
 
 # make sure you take out x.doctype and put in the actual file name once
@@ -40,16 +25,15 @@ notesSeparate = []
 with open("x.doctype") as f:
 	data = f.readlines()
 
-# goes through text line by line and separates out regexes
+# goes through text line by line, separates regexes from surrounding text,
+# and appends those to a list
 for line in data:
-	for item in notation:
-		i = 0
-		while i < len(notation):
-			if re.search(notation[i]):
-				notesSeparate.add(re.split(notation[i], line))
-				i += 1
-			else:
-				i += 1
+	newRow = []
+	notes = str.strip(", ".join(re.findall(notation, line, re.X)))
+	response = str.strip(str(re.sub(notation, "", line, re.X)))
+	newRow.append(response)
+	newRow.append(notes)
+	notesSeparate.append(newRow)
 
 for item in notesSeparate:
 	outputWriter.writerow(item)
